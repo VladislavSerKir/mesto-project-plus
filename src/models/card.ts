@@ -13,10 +13,10 @@ const cardSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  // owner: {
-  //   type: Schema.Types.ObjectId,
-  //   required: true,
-  // },
+  owner: {
+    type: Schema.Types.ObjectId,
+    required: true,
+  },
   likes: [{ type: Schema.Types.ObjectId, ref: 'user', default: [] }],
   createdAt: {
     type: Date,

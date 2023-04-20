@@ -26,6 +26,9 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use(router);
+app.get('*', function (req, res) {
+  res.status(404).send(res.statusCode);
+});
 
 async function connect() {
   try {
