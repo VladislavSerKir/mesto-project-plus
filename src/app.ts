@@ -7,6 +7,7 @@ import path from 'path';
 
 import router from './routes';
 import { CustomRequest } from './types';
+import { ERROR_CODE_404, ERROR_MESSAGE_404 } from './utils';
 
 const { PORT = 3000 } = process.env;
 
@@ -26,8 +27,8 @@ app.use((req: Request, res: Response, next: NextFunction) => {
 });
 
 app.use(router);
-app.get('*', function (req, res) {
-  res.status(404).send(res.statusCode);
+app.use('*', (req, res) => {
+  res.status(ERROR_CODE_404).send({ message: ERROR_MESSAGE_404 });
 });
 
 async function connect() {
