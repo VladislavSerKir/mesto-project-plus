@@ -11,13 +11,15 @@ import cookieParser from 'cookie-parser';
 import { requestLogger, errorLogger } from './middlewares/logger';
 import router from './routes';
 import {
-  ERROR_CODE_404, ERROR_MESSAGE_404, maxAvatarLength, maxNameLength,
+  // ERROR_CODE_404, ERROR_MESSAGE_404,
+  maxAvatarLength, maxNameLength,
   minLength, passwordPattern,
 } from './utils';
 import { createUser, login } from './controllers/users';
 import auth from './middlewares/auth';
 
 const { celebrate, Joi } = require('celebrate');
+const NotFound404 = require('./errors/404');
 
 const { PORT = 3000 } = process.env;
 
@@ -46,8 +48,8 @@ app.post('/signup', celebrate({
 }), createUser);
 app.use(auth);
 app.use(router);
-app.use('*', (req, res) => {
-  res.status(ERROR_CODE_404).send({ message: ERROR_MESSAGE_404 });
+app.use('*', () => {
+  throw new NotFound404();
 });
 app.use(errorLogger);
 

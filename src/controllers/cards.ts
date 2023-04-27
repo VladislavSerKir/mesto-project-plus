@@ -5,17 +5,17 @@ import Card from "../models/card";
 import {
   CODE_200,
   CODE_201,
-  ERROR_CODE_400, ERROR_CODE_401, ERROR_CODE_404, ERROR_CODE_500, ERROR_MESSAGE_400,
-  ERROR_MESSAGE_401, ERROR_MESSAGE_404,
-  ERROR_MESSAGE_500,
 } from "../utils";
+
+const BadRequest400 = require('../errors/400');
+const AuthorizationError401 = require('../errors/401');
+const NotFound404 = require('../errors/404');
 
 export const getCards = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const cards = await Card.find({});
     return res.status(CODE_200).send(cards);
   } catch (e) {
-    // return res.status(ERROR_CODE_500).send({ message: ERROR_MESSAGE_500 });
     return next(e);
   }
 };
@@ -30,12 +30,10 @@ export const createCard = async (req: Request, res: Response, next: NextFunction
     return res.status(CODE_201).send(newCard);
   } catch (e) {
     if (e instanceof mongoose.Error.ValidationError) {
-      // return res.status(ERROR_CODE_400).send({ message: ERROR_MESSAGE_400 });
-      return next(e);
+      throw new BadRequest400();
     }
 
     return next(e);
-    // return res.status(ERROR_CODE_500).send({ message: ERROR_MESSAGE_500 });
   }
 };
 
@@ -44,13 +42,12 @@ export const deleteCard = async (req: CustomRequest, res: Response, next: NextFu
     const cardToDelete = await Card.findById(req.params.cardId);
 
     if (!cardToDelete) {
-      return res.status(ERROR_CODE_404).send({ message: ERROR_MESSAGE_404 });
+      throw new NotFound404();
     }
 
     const customRequest = req as CustomRequest;
-    // console.log(cardToDelete.owner.toString(), customRequest.user?._id);
     if (cardToDelete.owner.toString() !== customRequest.user?._id) {
-      return res.status(ERROR_CODE_401).send({ message: ERROR_MESSAGE_401 });
+      throw new AuthorizationError401();
     }
 
     await Card.deleteOne({
@@ -59,11 +56,9 @@ export const deleteCard = async (req: CustomRequest, res: Response, next: NextFu
     return res.status(CODE_200).send(cardToDelete);
   } catch (e) {
     if (e instanceof mongoose.Error.CastError) {
-      // return res.status(ERROR_CODE_400).send({ message: ERROR_MESSAGE_400 });
-      return next(e);
+      throw new BadRequest400();
     }
 
-    // return res.status(ERROR_CODE_500).send({ message: ERROR_MESSAGE_500 });
     return next(e);
   }
 };
@@ -76,7 +71,7 @@ export const likeCard = async (req: Request, res: Response, next: NextFunction) 
     const isCard = await Card.findById(req.params.cardId);
 
     if (!isCard) {
-      return res.status(ERROR_CODE_404).send({ message: ERROR_MESSAGE_404 });
+      throw new NotFound404();
     }
 
     const likedCard = await Card.findByIdAndUpdate(
@@ -88,11 +83,9 @@ export const likeCard = async (req: Request, res: Response, next: NextFunction) 
     return res.status(CODE_200).send(likedCard);
   } catch (e) {
     if (e instanceof mongoose.Error.CastError) {
-      // return res.status(ERROR_CODE_400).send({ message: ERROR_MESSAGE_400 });
-      return next(e);
+      throw new BadRequest400();
     }
 
-    // return res.status(ERROR_CODE_500).send({ message: ERROR_MESSAGE_500 });
     return next(e);
   }
 };
@@ -106,7 +99,7 @@ export const removeLikeCard = async (req: Request, res: Response, next: NextFunc
     const isCard = await Card.findById(req.params.cardId);
 
     if (!isCard) {
-      return res.status(ERROR_CODE_404).send({ message: ERROR_MESSAGE_404 });
+      throw new NotFound404();
     }
 
     const likedCard = await Card.findByIdAndUpdate(
@@ -117,11 +110,9 @@ export const removeLikeCard = async (req: Request, res: Response, next: NextFunc
     return res.status(CODE_200).send(likedCard);
   } catch (e) {
     if (e instanceof mongoose.Error.CastError) {
-      // return res.status(ERROR_CODE_400).send({ message: ERROR_MESSAGE_400 });
-      return next(e);
+      throw new BadRequest400();
     }
 
-    // return res.status(ERROR_CODE_500).send({ message: ERROR_MESSAGE_500 });
     return next(e);
   }
 };

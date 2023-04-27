@@ -1,6 +1,9 @@
 import validator from 'validator';
 import { IUser } from "../types";
-import { maxAvatarLength, maxNameLength, minLength } from '../utils';
+import {
+  maxAvatarLength, maxNameLength, minLength,
+  urlPattern,
+} from '../utils';
 
 const bcrypt = require('bcrypt');
 
@@ -25,6 +28,7 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: false,
     default: 'https://pictures.s3.yandex.net/resources/jacques-cousteau_1604399756.png',
+    validate: (v: string) => v.match(urlPattern),
   },
   email: {
     type: String,
