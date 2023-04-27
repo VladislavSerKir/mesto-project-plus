@@ -1,4 +1,5 @@
 import { Schema } from "mongoose";
+import { maxNameLength, minLength } from "../utils";
 
 const mongoose = require('mongoose');
 
@@ -6,8 +7,8 @@ const cardSchema = new mongoose.Schema({
   name: {
     type: String,
     required: true,
-    minLength: 2,
-    maxLength: 30,
+    minLength,
+    maxLength: maxNameLength,
   },
   link: {
     type: String,

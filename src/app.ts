@@ -1,13 +1,23 @@
 import './env';
+// import express, {
+//   NextFunction, Request, Response, json,
+// } from 'express';
 import express, {
-  NextFunction, Request, Response, json,
+  json,
 } from 'express';
 import mongoose from 'mongoose';
 import path from 'path';
-
+import cookieParser from 'cookie-parser';
+import { requestLogger, errorLogger } from './middlewares/logger';
 import router from './routes';
-import { CustomRequest } from './types';
-import { ERROR_CODE_404, ERROR_MESSAGE_404 } from './utils';
+import {
+  ERROR_CODE_404, ERROR_MESSAGE_404, maxAvatarLength, maxNameLength,
+  minLength, passwordPattern,
+} from './utils';
+import { createUser, login } from './controllers/users';
+import auth from './middlewares/auth';
+
+const { celebrate, Joi } = require('celebrate');
 
 const { PORT = 3000 } = process.env;
 
@@ -16,20 +26,30 @@ const app = express();
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(json());
-
-app.use((req: Request, res: Response, next: NextFunction) => {
-  const requestCustom = req as CustomRequest;
-  requestCustom.user = {
-    _id: '644022682e1d30a07909beee',
-  };
-
-  next();
-});
-
+app.use(requestLogger);
+app.use(cookieParser());
+app.use(express.json());
+app.post('/signin', celebrate({
+  body: Joi.object().keys({
+    email: Joi.string().required().email(),
+    password: Joi.string().pattern(new RegExp(passwordPattern)).required(),
+  }),
+}), login);
+app.post('/signup', celebrate({
+  body: Joi.object().keys({
+    name: Joi.string().min(minLength).max(maxNameLength),
+    about: Joi.string().min(minLength).max(maxAvatarLength),
+    avatar: Joi.string(),
+    email: Joi.string().required().email(),
+    password: Joi.string().pattern(new RegExp(passwordPattern)).required(),
+  }),
+}), createUser);
+app.use(auth);
 app.use(router);
 app.use('*', (req, res) => {
   res.status(ERROR_CODE_404).send({ message: ERROR_MESSAGE_404 });
 });
+app.use(errorLogger);
 
 async function connect() {
   try {
