@@ -3,6 +3,7 @@ import './env';
 //   NextFunction, Request, Response, json,
 // } from 'express';
 import express, {
+  NextFunction,
   json,
 } from 'express';
 import mongoose from 'mongoose';
@@ -48,8 +49,8 @@ app.post('/signup', celebrate({
 }), createUser);
 app.use(auth);
 app.use(router);
-app.use('*', () => {
-  throw new NotFound404();
+app.use('*', (next: NextFunction) => {
+  next(new NotFound404());
 });
 app.use(errorLogger);
 

@@ -30,7 +30,7 @@ export const createCard = async (req: Request, res: Response, next: NextFunction
     return res.status(CODE_201).send(newCard);
   } catch (e) {
     if (e instanceof mongoose.Error.ValidationError) {
-      throw new BadRequest400();
+      next(new BadRequest400());
     }
 
     return next(e);
@@ -42,12 +42,12 @@ export const deleteCard = async (req: CustomRequest, res: Response, next: NextFu
     const cardToDelete = await Card.findById(req.params.cardId);
 
     if (!cardToDelete) {
-      throw new NotFound404();
+      next(new NotFound404());
     }
 
     const customRequest = req as CustomRequest;
     if (cardToDelete.owner.toString() !== customRequest.user?._id) {
-      throw new AuthorizationError401();
+      next(new AuthorizationError401());
     }
 
     await Card.deleteOne({
@@ -56,7 +56,7 @@ export const deleteCard = async (req: CustomRequest, res: Response, next: NextFu
     return res.status(CODE_200).send(cardToDelete);
   } catch (e) {
     if (e instanceof mongoose.Error.CastError) {
-      throw new BadRequest400();
+      next(new BadRequest400());
     }
 
     return next(e);
@@ -71,7 +71,7 @@ export const likeCard = async (req: Request, res: Response, next: NextFunction) 
     const isCard = await Card.findById(req.params.cardId);
 
     if (!isCard) {
-      throw new NotFound404();
+      next(new NotFound404());
     }
 
     const likedCard = await Card.findByIdAndUpdate(
@@ -83,7 +83,7 @@ export const likeCard = async (req: Request, res: Response, next: NextFunction) 
     return res.status(CODE_200).send(likedCard);
   } catch (e) {
     if (e instanceof mongoose.Error.CastError) {
-      throw new BadRequest400();
+      next(new BadRequest400());
     }
 
     return next(e);
@@ -99,7 +99,7 @@ export const removeLikeCard = async (req: Request, res: Response, next: NextFunc
     const isCard = await Card.findById(req.params.cardId);
 
     if (!isCard) {
-      throw new NotFound404();
+      next(new NotFound404());
     }
 
     const likedCard = await Card.findByIdAndUpdate(
@@ -110,7 +110,7 @@ export const removeLikeCard = async (req: Request, res: Response, next: NextFunc
     return res.status(CODE_200).send(likedCard);
   } catch (e) {
     if (e instanceof mongoose.Error.CastError) {
-      throw new BadRequest400();
+      next(new BadRequest400());
     }
 
     return next(e);

@@ -34,13 +34,13 @@ export const getUserById = async (req: Request, res: Response, next: NextFunctio
     const user = await User.findById(userId);
 
     if (!user) {
-      throw new NotFound404();
+      next(new NotFound404());
     }
 
     return res.status(CODE_200).send(user);
   } catch (e) {
     if (e instanceof mongoose.Error.CastError) {
-      throw new BadRequest400();
+      next(new BadRequest400());
     }
 
     return next(e);
@@ -68,9 +68,9 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
       });
   } catch (e: any) {
     if (e instanceof mongoose.Error.ValidationError) {
-      throw new BadRequest400();
+      next(new BadRequest400());
     } else if (e.code === 11000) {
-      throw new Conflict409(ERROR_MESSAGE_409);
+      next(new Conflict409(ERROR_MESSAGE_409));
     }
 
     return next(e);
@@ -88,11 +88,11 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
         res.send({ token });
       })
       .catch(() => {
-        throw new AuthorizationError401();
+        next(new AuthorizationError401());
       });
   } catch (e) {
     if (e instanceof mongoose.Error.ValidationError) {
-      throw new BadRequest400();
+      next(new BadRequest400());
     }
 
     return next(e);
@@ -107,7 +107,7 @@ export const editProfile = async (req: Request, res: Response, next: NextFunctio
     const { name, about } = req.body;
 
     if (!user) {
-      throw new NotFound404();
+      next(new NotFound404());
     }
 
     Object.assign(user, { name, about });
@@ -115,7 +115,7 @@ export const editProfile = async (req: Request, res: Response, next: NextFunctio
     return res.status(CODE_201).send(user);
   } catch (e) {
     if (e instanceof mongoose.Error.ValidationError) {
-      throw new BadRequest400();
+      next(new BadRequest400());
     }
 
     return next(e);
@@ -130,7 +130,7 @@ export const changeAvatar = async (req: Request, res: Response, next: NextFuncti
     const user = await User.findById(customRequest.user);
 
     if (!user) {
-      throw new NotFound404();
+      next(new NotFound404());
     }
 
     Object.assign(user, { avatar });
