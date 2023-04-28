@@ -1,7 +1,4 @@
 import './env';
-// import express, {
-//   NextFunction, Request, Response, json,
-// } from 'express';
 import express, {
   NextFunction,
   json,
@@ -11,15 +8,11 @@ import path from 'path';
 import cookieParser from 'cookie-parser';
 import { requestLogger, errorLogger } from './middlewares/logger';
 import router from './routes';
-import {
-  // ERROR_CODE_404, ERROR_MESSAGE_404,
-  maxAvatarLength, maxNameLength,
-  minLength, passwordPattern,
-} from './utils';
 import { createUser, login } from './controllers/users';
 import auth from './middlewares/auth';
+import validationRegistrationData from './validation/registrationData';
+import validationEmailPassword from './validation/emailPassword';
 
-const { celebrate, Joi } = require('celebrate');
 const NotFound404 = require('./errors/404');
 
 const { PORT = 3000 } = process.env;
@@ -32,21 +25,8 @@ app.use(json());
 app.use(requestLogger);
 app.use(cookieParser());
 app.use(express.json());
-app.post('/signin', celebrate({
-  body: Joi.object().keys({
-    email: Joi.string().required().email(),
-    password: Joi.string().pattern(new RegExp(passwordPattern)).required(),
-  }),
-}), login);
-app.post('/signup', celebrate({
-  body: Joi.object().keys({
-    name: Joi.string().min(minLength).max(maxNameLength),
-    about: Joi.string().min(minLength).max(maxAvatarLength),
-    avatar: Joi.string(),
-    email: Joi.string().required().email(),
-    password: Joi.string().pattern(new RegExp(passwordPattern)).required(),
-  }),
-}), createUser);
+app.post('/signin', validationEmailPassword, login);
+app.post('/signup', validationRegistrationData, createUser);
 app.use(auth);
 app.use(router);
 app.use('*', (next: NextFunction) => {

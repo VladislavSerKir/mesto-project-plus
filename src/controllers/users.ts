@@ -34,13 +34,13 @@ export const getUserById = async (req: Request, res: Response, next: NextFunctio
     const user = await User.findById(userId);
 
     if (!user) {
-      next(new NotFound404());
+      throw new NotFound404();
     }
 
     return res.status(CODE_200).send(user);
   } catch (e) {
     if (e instanceof mongoose.Error.CastError) {
-      next(new BadRequest400());
+      return next(new BadRequest400());
     }
 
     return next(e);
@@ -70,7 +70,7 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
     if (e instanceof mongoose.Error.ValidationError) {
       next(new BadRequest400());
     } else if (e.code === 11000) {
-      next(new Conflict409(ERROR_MESSAGE_409));
+      return next(new Conflict409(ERROR_MESSAGE_409));
     }
 
     return next(e);
@@ -85,16 +85,12 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
       .then((user: IUser) => {
         const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: weekLength });
         res.cookie('token', token, { httpOnly: true });
-        res.send({ token });
+        res.end();
       })
       .catch(() => {
-        next(new AuthorizationError401());
+        throw new AuthorizationError401();
       });
   } catch (e) {
-    if (e instanceof mongoose.Error.ValidationError) {
-      next(new BadRequest400());
-    }
-
     return next(e);
   }
 };
@@ -102,12 +98,12 @@ export const login = async (req: Request, res: Response, next: NextFunction) => 
 export const editProfile = async (req: Request, res: Response, next: NextFunction) => {
   try {
     const customRequest = req as CustomRequest;
-    const user = await User.findById(customRequest.user?._id);
+    const user = await User.findById(customRequest.user);
 
     const { name, about } = req.body;
 
     if (!user) {
-      next(new NotFound404());
+      throw new NotFound404();
     }
 
     Object.assign(user, { name, about });
@@ -130,7 +126,7 @@ export const changeAvatar = async (req: Request, res: Response, next: NextFuncti
     const user = await User.findById(customRequest.user);
 
     if (!user) {
-      next(new NotFound404());
+      throw new NotFound404();
     }
 
     Object.assign(user, { avatar });
@@ -138,7 +134,7 @@ export const changeAvatar = async (req: Request, res: Response, next: NextFuncti
     return res.status(CODE_201).send(user);
   } catch (e) {
     if (e instanceof mongoose.Error.ValidationError) {
-      next(new BadRequest400());
+      return next(new BadRequest400());
     }
 
     return next(e);

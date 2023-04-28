@@ -20,4 +20,4 @@ export const idLength = 24;
 export const weekLength = '7d';
 
 export const passwordPattern = '^[a-zA-Z0-9]{3,30}$';
-export const urlPattern = '(\b(https?|ftp|file)://)?[-A-Za-z0-9+&@#/%?=~_|!:,.;]+[-A-Za-z0-9+&@#/%=~_|]';
+export const urlPattern = /https?:\/\/(www\.)?[-a-zA-Z0-9@:%._\\/+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\\/+.~#?&//=]*)/;

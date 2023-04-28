@@ -1,7 +1,8 @@
 import { NextFunction, Response } from 'express';
 import jwt from 'jsonwebtoken';
 import { CustomRequest, IJwt } from '../types';
-import { ERROR_CODE_401, ERROR_MESSAGE_401 } from '../utils';
+
+const AuthorizationError401 = require('../errors/401');
 
 export default (req: CustomRequest, res: Response, next: NextFunction) => {
   const { token } = req.cookies;
@@ -9,9 +10,12 @@ export default (req: CustomRequest, res: Response, next: NextFunction) => {
   let payload;
 
   try {
+    if (!token) {
+      return next(new AuthorizationError401());
+    }
     payload = jwt.verify(token, 'some-secret-key');
   } catch (err) {
-    return res.status(ERROR_CODE_401).send({ message: ERROR_MESSAGE_401 });
+    return next(new AuthorizationError401());
   }
 
   req.user = payload as IJwt;

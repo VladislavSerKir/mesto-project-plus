@@ -13,7 +13,8 @@ const NotFound404 = require('../errors/404');
 
 export const getCards = async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const cards = await Card.find({});
+    const cards = await Card.find({}).populate('owner').populate('likes');
+
     return res.status(CODE_200).send(cards);
   } catch (e) {
     return next(e);
@@ -26,11 +27,12 @@ export const createCard = async (req: Request, res: Response, next: NextFunction
     const customRequest = req as CustomRequest;
 
     const newCard = await Card.create({ name, link, owner: customRequest.user?._id });
+    await newCard.populate('owner');
 
     return res.status(CODE_201).send(newCard);
   } catch (e) {
     if (e instanceof mongoose.Error.ValidationError) {
-      next(new BadRequest400());
+      return next(new BadRequest400());
     }
 
     return next(e);
@@ -42,21 +44,22 @@ export const deleteCard = async (req: CustomRequest, res: Response, next: NextFu
     const cardToDelete = await Card.findById(req.params.cardId);
 
     if (!cardToDelete) {
-      next(new NotFound404());
+      throw new NotFound404();
     }
 
     const customRequest = req as CustomRequest;
     if (cardToDelete.owner.toString() !== customRequest.user?._id) {
-      next(new AuthorizationError401());
+      throw new AuthorizationError401();
     }
 
     await Card.deleteOne({
       _id: req.params.cardId,
     });
+    await cardToDelete.populate('owner').populate('likes');
     return res.status(CODE_200).send(cardToDelete);
   } catch (e) {
     if (e instanceof mongoose.Error.CastError) {
-      next(new BadRequest400());
+      return next(new BadRequest400());
     }
 
     return next(e);
@@ -68,22 +71,18 @@ export const likeCard = async (req: Request, res: Response, next: NextFunction) 
     const customRequest = req as CustomRequest;
     const id = req.params.cardId;
 
-    const isCard = await Card.findById(req.params.cardId);
-
-    if (!isCard) {
-      next(new NotFound404());
-    }
-
     const likedCard = await Card.findByIdAndUpdate(
       id,
       { $addToSet: { likes: customRequest.user?._id } },
 
       { new: true },
-    );
+    )
+      .populate('owner')
+      .populate('likes');
     return res.status(CODE_200).send(likedCard);
   } catch (e) {
     if (e instanceof mongoose.Error.CastError) {
-      next(new BadRequest400());
+      return next(new BadRequest400());
     }
 
     return next(e);
@@ -96,21 +95,17 @@ export const removeLikeCard = async (req: Request, res: Response, next: NextFunc
 
     const id = req.params.cardId;
 
-    const isCard = await Card.findById(req.params.cardId);
-
-    if (!isCard) {
-      next(new NotFound404());
-    }
-
     const likedCard = await Card.findByIdAndUpdate(
       id,
       { $pull: { likes: customRequest.user?._id } },
       { new: true },
-    );
+    )
+      .populate('owner')
+      .populate('likes');
     return res.status(CODE_200).send(likedCard);
   } catch (e) {
     if (e instanceof mongoose.Error.CastError) {
-      next(new BadRequest400());
+      return next(new BadRequest400());
     }
 
     return next(e);

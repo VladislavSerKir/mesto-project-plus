@@ -9,6 +9,8 @@ const bcrypt = require('bcrypt');
 
 const mongoose = require('mongoose');
 
+const BadRequest400 = require('../errors/400');
+
 const userSchema = new mongoose.Schema({
   name: {
     type: String,
@@ -47,13 +49,13 @@ userSchema.static('findUserByCredentials', function findUserByCredentials(this: 
   return this.findOne({ email }).select('+password')
     .then((user: IUser) => {
       if (!user) {
-        return Promise.reject(new Error('Неправильные почта или пароль'));
+        return Promise.reject(new BadRequest400());
       }
 
       return bcrypt.compare(password, user.password)
         .then((matched: boolean) => {
           if (!matched) {
-            return Promise.reject(new Error('Неправильные почта или пароль'));
+            return Promise.reject(new BadRequest400());
           }
 
           return user;
