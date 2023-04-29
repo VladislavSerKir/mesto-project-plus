@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import { NextFunction, Request, Response } from "express";
-import { CustomRequest } from "../types";
+import { CustomRequest, ICard, IError } from "../types";
 import Card from "../models/card";
 import {
   CODE_200,
@@ -12,104 +12,97 @@ const AuthorizationError401 = require('../errors/401');
 const NotFound404 = require('../errors/404');
 
 export const getCards = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const cards = await Card.find({}).populate('owner').populate('likes');
-
-    return res.status(CODE_200).send(cards);
-  } catch (e) {
-    return next(e);
-  }
+  await Card.find({}).populate('owner').populate('likes')
+    .then((cards: ICard) => {
+      res.status(CODE_200).send(cards);
+    })
+    .catch((e: IError) => {
+      next(e);
+    });
 };
 
 export const createCard = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { name, link } = req.body;
-    const customRequest = req as CustomRequest;
+  const { name, link } = req.body;
+  const customRequest = req as CustomRequest;
 
-    const newCard = await Card.create({ name, link, owner: customRequest.user?._id });
-    await newCard.populate('owner');
-
-    return res.status(CODE_201).send(newCard);
-  } catch (e) {
-    if (e instanceof mongoose.Error.ValidationError) {
-      return next(new BadRequest400());
-    }
-
-    return next(e);
-  }
+  const newCard = await Card.create({ name, link, owner: customRequest.user?._id });
+  await newCard.populate('owner')
+    .then((card: ICard) => {
+      res.status(CODE_201).send(card);
+    })
+    .catch((e: IError) => {
+      if (e instanceof mongoose.Error.ValidationError) {
+        next(new BadRequest400());
+      } else {
+        next(e);
+      }
+    });
 };
 
 export const deleteCard = async (req: CustomRequest, res: Response, next: NextFunction) => {
-  try {
-    const cardToDelete = await Card.findById(req.params.cardId);
+  const customRequest = req as CustomRequest;
 
-    if (!cardToDelete) {
-      throw new NotFound404();
-    }
-
-    const customRequest = req as CustomRequest;
-    if (cardToDelete.owner.toString() !== customRequest.user?._id) {
-      throw new AuthorizationError401();
-    }
-
-    await Card.deleteOne({
-      _id: req.params.cardId,
+  Card.findOne({ _id: req.params.cardId })
+    .then((card: ICard) => {
+      if (!card) {
+        throw new NotFound404();
+      } else if (card.owner.toString() !== customRequest.user?._id) {
+        throw new AuthorizationError401();
+      } else {
+        Card.deleteOne({ _id: req.params.cardId })
+          .then((deletedCard: ICard) => res.status(CODE_200).send(deletedCard))
+          .catch(next);
+      }
+    })
+    .catch((e: IError) => {
+      if (e instanceof mongoose.Error.CastError) {
+        next(new BadRequest400());
+      } else {
+        next(e);
+      }
     });
-    await cardToDelete.populate('owner').populate('likes');
-    return res.status(CODE_200).send(cardToDelete);
-  } catch (e) {
-    if (e instanceof mongoose.Error.CastError) {
-      return next(new BadRequest400());
-    }
-
-    return next(e);
-  }
 };
 
 export const likeCard = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const customRequest = req as CustomRequest;
-    const id = req.params.cardId;
+  const customRequest = req as CustomRequest;
+  const id = req.params.cardId;
 
-    const likedCard = await Card.findByIdAndUpdate(
-      id,
-      { $addToSet: { likes: customRequest.user?._id } },
-
-      { new: true },
-    )
-      .populate('owner')
-      .populate('likes');
-    return res.status(CODE_200).send(likedCard);
-  } catch (e) {
-    if (e instanceof mongoose.Error.CastError) {
-      return next(new BadRequest400());
-    }
-
-    return next(e);
-  }
+  await Card.findByIdAndUpdate(
+    id,
+    { $addToSet: { likes: customRequest.user?._id } },
+    { new: true },
+  )
+    .populate(['owner', 'likes'])
+    .then((likedCard: ICard) => {
+      res.status(CODE_200).send(likedCard);
+    })
+    .catch((e: IError) => {
+      if (e instanceof mongoose.Error.CastError) {
+        next(new BadRequest400());
+      } else {
+        next(e);
+      }
+    });
 };
 
 export const removeLikeCard = async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const customRequest = req as CustomRequest;
+  const customRequest = req as CustomRequest;
+  const id = req.params.cardId;
 
-    const id = req.params.cardId;
-
-    const likedCard = await Card.findByIdAndUpdate(
-      id,
-      { $pull: { likes: customRequest.user?._id } },
-      { new: true },
-    )
-      .populate('owner')
-      .populate('likes');
-    return res.status(CODE_200).send(likedCard);
-  } catch (e) {
-    if (e instanceof mongoose.Error.CastError) {
-      return next(new BadRequest400());
-    }
-
-    return next(e);
-  }
+  await Card.findByIdAndUpdate(
+    id,
+    { $pull: { likes: customRequest.user?._id } },
+    { new: true },
+  )
+    .populate(['owner', 'likes'])
+    .then((likedCard: ICard) => {
+      res.status(CODE_200).send(likedCard);
+    })
+    .catch((e: IError) => {
+      if (e instanceof mongoose.Error.CastError) {
+        next(new BadRequest400());
+      } else {
+        next(e);
+      }
+    });
 };
-
-export default {};

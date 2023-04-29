@@ -20,5 +20,15 @@ export interface IUser {
 
 export interface IError extends Error {
   statusCode: number,
-  message: string
+  message: string,
+  code?: number
+}
+
+export interface ICard {
+  _id: string,
+  name: string,
+  link: string,
+  owner: IUser,
+  likes: Array<IUser>,
+  createdAt: Date
 }

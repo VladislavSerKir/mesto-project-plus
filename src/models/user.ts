@@ -1,6 +1,7 @@
 import validator from 'validator';
 import { IUser } from "../types";
 import {
+  ERROR_MESSAGE_400,
   maxAvatarLength, maxNameLength, minLength,
   urlPattern,
 } from '../utils';
@@ -8,8 +9,6 @@ import {
 const bcrypt = require('bcrypt');
 
 const mongoose = require('mongoose');
-
-const BadRequest400 = require('../errors/400');
 
 const userSchema = new mongoose.Schema({
   name: {
@@ -49,13 +48,13 @@ userSchema.static('findUserByCredentials', function findUserByCredentials(this: 
   return this.findOne({ email }).select('+password')
     .then((user: IUser) => {
       if (!user) {
-        return Promise.reject(new BadRequest400());
+        return Promise.reject(ERROR_MESSAGE_400);
       }
 
       return bcrypt.compare(password, user.password)
         .then((matched: boolean) => {
           if (!matched) {
-            return Promise.reject(new BadRequest400());
+            return Promise.reject(ERROR_MESSAGE_400);
           }
 
           return user;

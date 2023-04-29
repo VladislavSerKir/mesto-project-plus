@@ -24,3 +24,5 @@ yarn-error.log*
 
 error.log
 request.log
+
+.env
